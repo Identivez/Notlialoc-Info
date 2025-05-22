@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notliáloc - Sistema de Notificaciones Inteligentes</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            background: #0f172a;
+            position: relative;
+        }
+
+        /* Fondo exacto de la plataforma */
+        .main-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%);
+        }
+
+        /* Efecto de matrix con código */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        .matrix-char {
+            position: absolute;
+            color: #22c55e;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            animation: matrixFall linear infinite;
+        }
+
+        @keyframes matrixFall {
+            0% {
+                transform: translateY(-100px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        /* Lluvia de notificaciones mejorada */
+        .notifications-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .notification-bell {
+            position: absolute;
+            color: #3b82f6;
+            font-size: 1.2rem;
+            opacity: 0;
+            animation: bellFall linear infinite;
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
+        }
+
+        .notification-bell.mobile {
+            font-size: 1rem;
+        }
+
+        .notification-bell::before {
+            content: '🔔';
+            display: block;
+            animation: bellRing 0.8s ease-in-out infinite alternate;
+        }
+
+        .notification-bell.variant-1::before { content: '🔔'; }
+        .notification-bell.variant-2::before { content: '📱'; }
+        .notification-bell.variant-3::before { content: '💬'; }
+        .notification-bell.variant-4::before { content: '📢'; }
+        .notification-bell.variant-5::before { content: '⚡'; }
+        .notification-bell.variant-6::before { content: '📊'; }
+        .notification-bell.variant-7::before { content: '🎯'; }
+
+        @keyframes bellFall {
+            0% {
+                transform: translateY(-100px) translateX(0px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(100vh) translateX(var(--drift)) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes bellRing {
+            0% { transform: rotate(-15deg) scale(1); }
+            100% { transform: rotate(15deg) scale(1.15); }
+        }
+
+        /* Ondas expansivas ocasionales */
+        .wave-pulse {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #3b82f6;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: waveExpand 4s ease-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes waveExpand {
+            0% {
+                width: 20px;
+                height: 20px;
+                opacity: 1;
+            }
+            100% {
+                width: 800px;
+                height: 800px;
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Header con logo animado */
+        .header {
+            text-align: center;
+            padding: 50px 0 40px;
+            position: relative;
+        }
+
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            font-size: 3.2rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 2;
+            animation: logoGlow 3s ease-in-out infinite alternate;
+            text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+        }
+
+        .logo::before {
+            content: '🔔';
+            position: absolute;
+            left: -50px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.5rem;
+            animation: bellBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes logoGlow {
+            0% { 
+                filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.4));
+            }
+            100% { 
+                filter: drop-shadow(0 0 40px rgba(29, 78, 216, 0.8));
+            }
+        }
+
+        @keyframes bellBounce {
+            0%, 100% { transform: translateY(-50%) rotate(0deg); }
+            25% { transform: translateY(-60%) rotate(-10deg); }
+            75% { transform: translateY(-40%) rotate(10deg); }
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            position: relative;
+            z-index: 2;
+            animation: fadeInUp 1s ease-out 0.3s both;
+            margin-bottom: 15px;
+        }
+
+        .company-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 15px;
+            box-shadow: 0 8px 25px rgba(29, 78, 216, 0.4);
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Indicador de scroll mejorado */
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1d4ed8, #3b82f6, #60a5fa);
+            z-index: 1000;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Tríptico con efectos 3D mejorados */
+        .triptico {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin: 50px 0;
+            perspective: 1200px;
+        }
+
+        .panel {
+            background: linear-gradient(145deg, #1e293b, #334155);
+            border-radius: 20px;
+            padding: 30px 25px;
+            box-shadow: 
+                0 15px 35px rgba(0,0,0,0.4),
+                0 5px 15px rgba(59, 130, 246, 0.1),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+            transform: translateY(40px) rotateX(15deg);
+            opacity: 0;
+            animation: panel3DEntry 1s ease-out forwards;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .panel:hover::before {
+            left: 100%;
+        }
+
+        .panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1d4ed8, #3b82f6, #60a5fa);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .panel:hover::after {
+            opacity: 1;
+        }
+
+        .panel:nth-child(1) { animation-delay: 0.3s; }
+        .panel:nth-child(2) { animation-delay: 0.6s; }
+        .panel:nth-child(3) { animation-delay: 0.9s; }
+
+        .panel:active {
+            transform: translateY(-8px) scale(0.98) rotateX(0deg);
+        }
+
+        @keyframes panel3DEntry {
+            from {
+                opacity: 0;
+                transform: translateY(60px) rotateX(25deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(15deg);
+            }
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .panel-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            position: relative;
+            box-shadow: 
+                0 10px 25px rgba(29, 78, 216, 0.4),
+                inset 0 -5px 15px rgba(0,0,0,0.2);
+            animation: iconFloat 4s ease-in-out infinite;
+        }
+
+        .panel-icon::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, #1d4ed8, #3b82f6, #60a5fa, #1d4ed8);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(8px);
+            animation: iconGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-15px) rotate(10deg) scale(1.05); }
+        }
+
+        @keyframes iconGlow {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .panel h2 {
+            color: #f1f5f9;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .panel h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            margin: 15px auto;
+            border-radius: 2px;
+            box-shadow: 0 2px 10px rgba(29, 78, 216, 0.4);
+        }
+
+        .panel p {
+            color: #cbd5e1;
+            line-height: 1.8;
+            margin-bottom: 18px;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        .panel strong {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .panel em {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Sección de beneficios con efectos especiales */
+        .benefits-section {
+            background: linear-gradient(145deg, #1e293b, #334155);
+            border-radius: 25px;
+            padding: 40px 30px;
+            margin: 60px 0;
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.4),
+                0 5px 15px rgba(59, 130, 246, 0.1),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+            animation: fadeIn 1.2s ease-out 1.2s both;
+            position: relative;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            overflow: hidden;
+        }
+
+        .benefits-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.05), transparent);
+            animation: rotate 25s linear infinite;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .benefits-title {
+            text-align: center;
+            color: #f1f5f9;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .benefits-subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin-top: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .benefit-card {
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            padding: 30px 25px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 10px 25px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .benefit-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1d4ed8, #3b82f6, #60a5fa);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .benefit-card:hover::before,
+        .benefit-card:active::before {
+            transform: scaleX(1);
+        }
+
+        .benefit-card:active {
+            transform: translateY(-5px) scale(0.98);
+            box-shadow: 
+                0 15px 35px rgba(0,0,0,0.4),
+                0 0 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .benefit-icon-container {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 20px rgba(29, 78, 216, 0.4);
+            position: relative;
+        }
+
+        .benefit-icon-container::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #1d4ed8, #3b82f6, #60a5fa);
+            border-radius: 20px;
+            z-index: -1;
+            filter: blur(6px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .benefit-card:hover .benefit-icon-container {
+            transform: scale(1.15) rotate(10deg);
+        }
+
+        .benefit-card:hover .benefit-icon-container::after {
+            opacity: 0.8;
+        }
+
+        .benefit-icon {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .benefit-card h3 {
+            color: #f1f5f9;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .benefit-card p {
+            color: #cbd5e1;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* Estadísticas animadas */
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #60a5fa;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        /* Footer mejorado */
+        .footer {
+            text-align: center;
+            padding: 40px 30px;
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            border-radius: 25px;
+            margin-top: 60px;
+            position: relative;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 
+                0 15px 35px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+            overflow: hidden;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05), transparent);
+            animation: footerPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes footerPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .footer-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .footer h3 {
+            color: #f1f5f9;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .footer p {
+            color: #cbd5e1;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 35px;
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.4s ease;
+            box-shadow: 
+                0 10px 25px rgba(29, 78, 216, 0.4),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .cta-button:hover::before,
+        .cta-button:active::before {
+            left: 100%;
+        }
+
+        .cta-button:active {
+            transform: translateY(-3px) scale(0.98);
+            box-shadow: 
+                0 15px 35px rgba(29, 78, 216, 0.5),
+                0 0 25px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Animaciones básicas */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive mejorado */
+        @media (min-width: 480px) {
+            .container { padding: 20px; }
+            .logo { font-size: 3.6rem; }
+            .panel { padding: 35px 30px; }
+        }
+
+        @media (min-width: 768px) {
+            .triptico {
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 30px;
+            }
+            .benefits-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 30px;
+            }
+            .logo { font-size: 4rem; }
+        }
+
+        @media (min-width: 1024px) {
+            .container { padding: 40px; }
+            .triptico { gap: 35px; margin: 80px 0; }
+            .panel:hover {
+                transform: translateY(-12px) scale(1.03) rotateX(0deg);
+                box-shadow: 
+                    0 25px 50px rgba(0,0,0,0.5),
+                    0 0 30px rgba(59, 130, 246, 0.3);
+            }
+        }
+
+        /* Optimizaciones móvil */
+        @media (max-width: 767px) {
+            .panel-icon { width: 65px; height: 65px; font-size: 1.6rem; }
+            .benefit-icon-container { width: 60px; height: 60px; }
+            .matrix-rain { display: none; }
+        }
+
+        /* Accesibilidad */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Indicador de scroll -->
+    <div class="scroll-indicator" id="scrollIndicator"></div>
+
+    <!-- Fondo principal -->
+    <div class="main-bg"></div>
+    
+    <!-- Efecto Matrix -->
+    <div class="matrix-rain" id="matrixRain"></div>
+    
+    <!-- Ondas expansivas -->
+    <div class="wave-pulse"></div>
+    
+    <!-- Lluvia de notificaciones -->
+    <div class="notifications-rain" id="notificationsRain"></div>
+    
+    <div class="container">
+        <!-- Header mejorado -->
+        <header class="header">
+            <div class="logo-container">
+                <h1 class="logo">Notliáloc</h1>
+            </div>
+            <p class="subtitle">Sistema de Notificaciones Inteligentes del Futuro</p>
+            <div class="company-badge">
+                <i class="fas fa-bell"></i> Solución Digital Profesional
+                <span class="feature-counter">100% Seguro</span>
+            </div>
+        </header>
+
+        <!-- Estadísticas -->
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-number" data-count="100">0</span>
+                <span class="stat-label">% Privacidad</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-count="24">0</span>
+                <span class="stat-label">Hrs Activo</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-count="0">0</span>
+                <span class="stat-label">Papel Usado</span>
+            </div>
+        </div>
+
+        <!-- Tríptico principal -->
+        <section class="triptico">
+            <!-- Panel 1: ¿Qué es? -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                </div>
+                <h2>¿Qué es Notliáloc?</h2>
+                <p>Notliáloc es un <strong>sistema revolucionario de notificaciones</strong> que establece la comunicación entre establecimientos y sus usuarios, sin necesidad de compartir datos personales como números de teléfono o correos electrónicos.</p>
+                <p><em>Una solución digital que protege tu privacidad mientras te mantiene conectado.</em> <span class="feature-counter">Sin datos personales</span></p>
+            </div>
+
+            <!-- Panel 2: ¿Qué hace? -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                </div>
+                <h2>¿Qué hace?</h2>
+                <p>A través de una <strong>plataforma web</strong> para establecimientos y una <strong>aplicación móvil</strong> para usuarios, Notliáloc permite dar seguimiento a pedidos mediante códigos QR.</p>
+                <p>El cliente <strong>escanea el código</strong> y recibe notificaciones en tiempo real sobre el estado de su pedido. La información se guarda en un <strong>historial completo</strong>. <span class="feature-counter">Tiempo real</span></p>
+            </div>
+
+            <!-- Panel 3: ¿Para quién es? -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <h2>¿Para quién es?</h2>
+                <p><strong>🏢 Plataforma Web:</strong> Para establecimientos que buscan sustituir dispositivos físicos y papel por una solución digital eficiente.</p>
+                <p><strong>📱 App Móvil:</strong> Para usuarios que desean acceso en tiempo real a la información de sus pedidos con total privacidad. <span class="feature-counter">Universal</span></p>
+            </div>
+        </section>
+
+        <!-- Sección de beneficios -->
+        <section class="benefits-section">
+            <h2 class="benefits-title">Beneficios y Ventajas Exclusivas</h2>
+            <p class="benefits-subtitle">Descubre cómo Notliáloc transforma completamente la experiencia</p>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon-container">
+                        <i class="fas fa-store benefit-icon"></i>
+                    </div>
+                    <h3>Para Negocios</h3>
+                    <p><strong>Mejora la atención al cliente</strong>, optimiza la gestión de pedidos y <strong>reduce costos operativos</strong> eliminando dispositivos físicos y papel. Aumenta la eficiencia hasta un 300%.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon-container">
+                        <i class="fas fa-user-check benefit-icon"></i>
+                    </div>
+                    <h3>Para Usuarios</h3>
+                    <p>Experiencia <strong>práctica y eficiente</strong> con notificaciones en tiempo real y <strong>mayor privacidad</strong>, evitando esperas y confusiones. Tu tiempo es valioso.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon-container">
+                        <i class="fas fa-leaf benefit-icon"></i>
+                    </div>
+                    <h3>Medio Ambiente</h3>
+                    <p><strong>Reduce basura electrónica</strong> y el uso de papel con una <strong>solución digital sustentable</strong> para un futuro más verde. Cero impacto ambiental.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <h3>¡Revoluciona tu negocio con Notliáloc!</h3>
+                <p>La solución inteligente para la gestión de pedidos del futuro</p>
+                <a href="#" class="cta-button">
+                    <i class="fas fa-rocket"></i>
+                    ¡Comienza Tu Transformación Digital!
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Configuración optimizada
+        const isMobile = window.innerWidth <= 768;
+        const isLowPowerDevice = navigator.hardwareConcurrency <= 4;
+
+        // Efecto Matrix
+        function createMatrixRain() {
+            if (isMobile) return; // Solo en desktop
+            
+            const matrixContainer = document.getElementById('matrixRain');
+            const chars = '01ノトリアロック';
+            
+            function createMatrixChar() {
+                const char = document.createElement('div');
+                char.className = 'matrix-char';
+                char.textContent = chars[Math.floor(Math.random() * chars.length)];
+                char.style.left = Math.random() * 100 + '%';
+                char.style.animationDuration = Math.random() * 3 + 2 + 's';
+                char.style.animationDelay = Math.random() * 2 + 's';
+                
+                matrixContainer.appendChild(char);
+                
+                setTimeout(() => {
+                    if (char.parentNode) char.remove();
+                }, 5000);
+            }
+            
+            setInterval(createMatrixChar, 200);
+        }
+
+        // Lluvia de notificaciones mejorada
+        function createNotificationRain() {
+            const rainContainer = document.getElementById('notificationsRain');
+            const bellVariants = ['variant-1', 'variant-2', 'variant-3', 'variant-4', 'variant-5', 'variant-6', 'variant-7'];
+            const numberOfBells = isMobile ? 8 : 15;
+
+            function createBell() {
+                const bell = document.createElement('div');
+                bell.className = `notification-bell ${isMobile ? 'mobile' : ''} ${bellVariants[Math.floor(Math.random() * bellVariants.length)]}`;
+                
+                bell.style.left = Math.random() * 100 + '%';
+                const fallDuration = isMobile ? Math.random() * 5 + 7 : Math.random() * 4 + 5;
+                bell.style.animationDuration = fallDuration + 's';
+                
+                const drift = (Math.random() - 0.5) * 120;
+                bell.style.setProperty('--drift', drift + 'px');
+                bell.style.animationDelay = Math.random() * 3 + 's';
+                
+                rainContainer.appendChild(bell);
+                
+                setTimeout(() => {
+                    if (bell.parentNode) bell.remove();
+                }, (fallDuration + 3) * 1000);
+            }
+
+            for (let i = 0; i < numberOfBells; i++) {
+                setTimeout(() => createBell(), i * (isMobile ? 600 : 400));
+            }
+
+            const interval = isMobile ? 1000 : 600;
+            setInterval(() => {
+                if (rainContainer.children.length < numberOfBells) {
+                    createBell();
+                }
+            }, interval);
+        }
+
+        // Contador animado
+        function animateCounters() {
+            const counters = document.querySelectorAll('[data-count]');
+            
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-count'));
+                let current = 0;
+                const increment = target / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    counter.textContent = Math.floor(current);
+                    if (current >= target) {
+                        counter.textContent = target;
+                        clearInterval(timer);
+                    }
+                }, 40);
+            });
+        }
+
+        // Indicador de scroll
+        function updateScrollIndicator() {
+            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercent = (scrollTop / scrollHeight) * 100;
+            document.getElementById('scrollIndicator').style.width = scrollPercent + '%';
+        }
+
+        // Animaciones al scroll
+        function setupScrollAnimations() {
+            const observerOptions = {
+                threshold: isMobile ? 0.05 : 0.1,
+                rootMargin: '0px 0px -80px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = entry.target.classList.contains('panel') 
+                            ? 'translateY(0) rotateX(15deg)' 
+                            : 'translateY(0)';
+                        entry.target.classList.add('animate-in');
+                        
+                        // Activar contadores cuando sean visibles
+                        if (entry.target.querySelector('[data-count]')) {
+                            setTimeout(animateCounters, 500);
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.panel, .benefit-card, .benefits-section, .stats-row').forEach(element => {
+                observer.observe(element);
+            });
+        }
+
+        // Interacciones táctiles
+        function setupTouchInteractions() {
+            if (!isMobile) return;
+
+            const touchElements = document.querySelectorAll('.panel, .benefit-card, .cta-button');
+            
+            touchElements.forEach(element => {
+                element.addEventListener('touchstart', function(e) {
+                    this.style.transform = this.classList.contains('panel') 
+                        ? 'translateY(-5px) scale(0.98) rotateX(0deg)' 
+                        : 'translateY(-3px) scale(0.98)';
+                    this.style.transition = 'transform 0.1s ease';
+                }, { passive: true });
+                
+                element.addEventListener('touchend', function(e) {
+                    this.style.transform = '';
+                    this.style.transition = 'transform 0.4s ease';
+                }, { passive: true });
+            });
+        }
+
+        // Efecto typing para el logo
+        function typeWriter() {
+            const logo = document.querySelector('.logo');
+            const text = 'Notliáloc';
+            logo.textContent = '';
+            
+            let i = 0;
+            const speed = isMobile ? 150 : 120;
+            const timer = setInterval(() => {
+                logo.textContent += text[i];
+                i++;
+                if (i >= text.length) {
+                    clearInterval(timer);
+                }
+            }, speed);
+        }
+
+        // Efectos de partículas adicionales
+        function createSparkles() {
+            if (isMobile || isLowPowerDevice) return;
+            
+            setInterval(() => {
+                const sparkle = document.createElement('div');
+                sparkle.style.cssText = `
+                    position: fixed;
+                    width: 4px;
+                    height: 4px;
+                    background: #60a5fa;
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1;
+                    animation: sparkleEffect 2s ease-out forwards;
+                `;
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                
+                document.body.appendChild(sparkle);
+                
+                setTimeout(() => sparkle.remove(), 2000);
+            }, 3000);
+        }
+
+        // Throttle para optimizar eventos
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (!inThrottle) {
+                    func.apply(context, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            }
+        }
+
+        // Añadir estilos dinámicos
+        function addDynamicStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes sparkleEffect {
+                    0% {
+                        opacity: 0;
+                        transform: scale(0) rotate(0deg);
+                    }
+                    50% {
+                        opacity: 1;
+                        transform: scale(1) rotate(180deg);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: scale(0) rotate(360deg);
+                    }
+                }
+                
+                .animate-in {
+                    animation: bounceIn 0.8s ease-out !important;
+                }
+                
+                @keyframes bounceIn {
+                    0% {
+                        transform: scale(0.3) translateY(50px);
+                        opacity: 0;
+                    }
+                    50% {
+                        transform: scale(1.05) translateY(-10px);
+                        opacity: 0.8;
+                    }
+                    70% {
+                        transform: scale(0.9) translateY(0px);
+                        opacity: 0.9;
+                    }
+                    100% {
+                        transform: scale(1) translateY(0px);
+                        opacity: 1;
+                    }
+                }
+                
+                .loading-effect {
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                .loading-effect::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+                    animation: loading 1.5s infinite;
+                }
+                
+                @keyframes loading {
+                    100% { left: 100%; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Inicialización principal
+        document.addEventListener('DOMContentLoaded', () => {
+            // Crear efectos visuales
+            createNotificationRain();
+            createMatrixRain();
+            addDynamicStyles();
+            
+            // Configurar animaciones y interacciones
+            setupScrollAnimations();
+            setupTouchInteractions();
+            
+            // Efectos especiales para desktop
+            if (!isMobile && !isLowPowerDevice) {
+                createSparkles();
+            }
+            
+            // Animaciones de entrada
+            setTimeout(typeWriter, 800);
+            
+            // Event listeners optimizados
+            const throttledScrollUpdate = throttle(updateScrollIndicator, isMobile ? 16 : 8);
+            window.addEventListener('scroll', throttledScrollUpdate, { passive: true });
+            
+            // Optimizar para dispositivos de bajo rendimiento
+            if (isLowPowerDevice) {
+                document.getElementById('matrixRain').style.display = 'none';
+                document.querySelector('.wave-pulse').style.display = 'none';
+            }
+        });
+
+        // Limpieza de memoria
+        window.addEventListener('beforeunload', () => {
+            document.getElementById('notificationsRain').innerHTML = '';
+            document.getElementById('matrixRain').innerHTML = '';
+        });
+
+        // Manejo de resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (window.innerWidth <= 768 && !isMobile) {
+                    location.reload();
+                }
+            }, 300);
+        });
+
+        // Monitor de rendimiento
+        if ('performance' in window) {
+            window.addEventListener('load', () => {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                if (loadTime > 4000) {
+                    // Reducir efectos si la carga es lenta
+                    document.querySelectorAll('.notification-bell').forEach((bell, index) => {
+                        if (index > 5) bell.remove();
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
